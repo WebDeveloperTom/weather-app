@@ -17,7 +17,8 @@ class App extends Component {
     error: false,
     geolocation: false
   };
-  // api.openweathermap.org/data/2.5/weather?q={city name}
+  // api.openweathermap.org/data/2.5/weather?q={city name}&APPID=76519edb8402df02b5fb3c06f42299f5
+  //data.cod == 404
 
   componentDidMount() {
     if ("geolocation" in navigator) {
@@ -34,14 +35,18 @@ class App extends Component {
       lat: position.coords.latitude
     });
     //dummy loading time
-    setTimeout(this.setData, 5000);
-    // fetch(
-    //   `https://api.openweathermap.org/data/2.5/weather?lat=${
-    //     this.state.lat
-    //   }&lon=${this.state.lon}&APPID=${apiKey}&units=metric`
-    // )
-    //   .then(response => response.json())
-    //   .then(data => this.setState({ data: data, isLoaded: true }));
+    // setTimeout(this.setData, 5000);
+    fetch(
+      `https://api.openweathermap.org/data/2.5/weather?lat=${
+        this.state.lat
+      }&lon=${this.state.lon}&APPID=${apiKey}&units=metric`
+    )
+      .then(response => response.json())
+      .then(data =>
+        data.cod === "404"
+          ? this.setState({ error: true })
+          : this.setState({ data: data, isLoaded: true })
+      );
   };
   setData = () => {
     this.setState({
@@ -77,12 +82,14 @@ class App extends Component {
         )
           .then(response => response.json())
           .then(data =>
-            this.setState({
-              loading: false,
-              data: data,
-              isLoaded: true,
-              error: false
-            })
+            data.cod === "404"
+              ? this.setState({ error: true })
+              : this.setState({
+                  loading: false,
+                  data: data,
+                  isLoaded: true,
+                  error: false
+                })
           );
         //set state to loaded.
       } else {
@@ -96,23 +103,33 @@ class App extends Component {
         )
           .then(response => response.json())
           .then(data =>
-            this.setState({
-              loading: false,
-              data: data,
-              isLoaded: true,
-              error: false
-            })
+            data.cod === "404"
+              ? this.setState({ error: true })
+              : this.setState({
+                  loading: false,
+                  data: data,
+                  isLoaded: true,
+                  error: false
+                })
           );
       }
     }
   };
 
   render() {
+    var currentTime = new Date();
+    var hours = currentTime.getHours();
+    var minutes = currentTime.getMinutes();
+
+    if (minutes < 10) {
+      minutes = "0" + minutes;
+    }
+
     let weather;
     if (this.state.error) {
       weather = (
         <div>
-          <p>We are unable to get your location. Please enable Geolocation.</p>
+          <p>Whoops. Something when wrong. Please try again.</p>
         </div>
       );
     } else if (this.state.isLoaded) {
@@ -122,8 +139,10 @@ class App extends Component {
     }
 
     return (
-      <div>
-        <h1>Your local weather</h1>
+      <div className="main">
+        <h1>
+          Your local weather at {hours}:{minutes}
+        </h1>
         <form onSubmit={this.onSubmit}>
           <input
             onChange={this.handleChange}
